@@ -12,18 +12,18 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import com.assignment.image.MagicImages.Photo;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/photos")
 @CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
 public class PhotoResource {
 
 	private static final String photoResourceUrl = "http://5ad8d1c9dc1baa0014c60c51.mockapi.io/api/br/v1/magic";
-	private static final int MaxSeqNum = 50;
-	private static final int PicsPerPage = 10;
+	private static final int MaxSeqNum = 100;
 
 	private List<Photo> listPhotos = new LinkedList<>();
 
@@ -38,6 +38,8 @@ public class PhotoResource {
 			photo = response.getBody();
 		} catch (Exception e) {
 			Logger.getLogger(this.getClass().getName()).info("Id: " + id + ", " + e.fillInStackTrace().toString());
+			// TODO: get logic to get Content-Length , Etag to determin from
+			// ResponseHeader of HTTPClientException, then determine if contine to fetch next id or not.
 		}
 		if (response != null) {
 			photo = response.getBody();
@@ -49,11 +51,10 @@ public class PhotoResource {
 
 	}
 
-	@RequestMapping(value = "/photos", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+	@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
 	public ResponseEntity getPhotos() {
 		logger.info("photow  invoked: ");
 
-		// private List<Photo> listPhotos = new LinkedList<>();
 		for (long i = 1; i <= MaxSeqNum; i++) {
 			ResponseEntity<Photo> result = getPhoto(i);
 			if (result != null && result.getBody() != null) {
@@ -67,34 +68,32 @@ public class PhotoResource {
 			return ResponseEntity.noContent().build();
 
 	}
-
-	@RequestMapping("/photos/{id}")
+	@RequestMapping(value="{id}", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
 	public ResponseEntity byId(@PathVariable("id") long id) {
 		logger.info("photo  byId() invoked: " + id);
 		return getPhoto(id);
 	}
 
-	@RequestMapping("/photos/pages/{pagenum}")
-	public ResponseEntity byPageNum(@PathVariable("pagenum") int pagenum) {
-		logger.info("photo  byPageNum() invoked: " + pagenum);
-		return getPhotoPage(pagenum);
+	// ?offset=25&limit=15  
+	@RequestMapping(value="/pagnation", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+	public ResponseEntity byPageNum(@RequestParam(required= false, value = "offset") int offset, @RequestParam(value="limit") int limit) {
+		logger.info("photo  byPageNum() invoked: offset:" +offset + " limit:"+ limit);
+		return getPhotoPage(limit, offset);
 	}
 
-	private ResponseEntity getPhotoPage(int pagenum) {
+	private ResponseEntity getPhotoPage(int limit, int offset) {
 		if (listPhotos == null || listPhotos.size() == 0) {
-			// listPhotos = getAllPhotos();
 			getAllPhotos();
 		}
-		if (pagenum <= 0)
-			pagenum = 1;
-		if (pagenum >= listPhotos.size() / PicsPerPage + 1)
-			pagenum = listPhotos.size() / PicsPerPage + 1;
-		int startIdx = (pagenum - 1) * PicsPerPage + 1;
-		int endIdx = pagenum * PicsPerPage;
+		if (offset <= 0)
+			offset = 1;
+		if (offset >= listPhotos.size() / limit + 1)
+			offset = listPhotos.size() / limit + 1;
+		if(limit <=0 )limit = 20;
 
-		// List list = Stream.of(listPhotos).skip(startIdx -1).limit(PicsPerPage).collect(Collectors.toList());
-		List list = Stream.of(listPhotos).skip(startIdx - 1).collect(Collectors.toList());
-		logger.info("startIdx:" + startIdx + " endIdx:" + endIdx + " list.siz:" + list.size());
+		List list = listPhotos.stream().skip(offset).limit(limit).collect(Collectors.toList());
+		logger.info("offset:" + offset + " limit:" + limit + " list.siz:" + list.size());
+
 		if (list.size() > 0)
 			return ResponseEntity.ok().body(list);
 		else
