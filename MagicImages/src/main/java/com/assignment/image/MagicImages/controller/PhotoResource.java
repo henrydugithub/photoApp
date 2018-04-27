@@ -22,8 +22,8 @@ import com.assignment.image.MagicImages.Photo;
 @CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
 public class PhotoResource {
 
-	private static final String photoResourceUrl = "http://5ad8d1c9dc1baa0014c60c51.mockapi.io/api/br/v1/magic";
-	private static final int MaxSeqNum = 100;
+	private static final String photoResourceUrl = "http://5ad8d1c9dc1baa0014c60c51.mockapi.io/api/br/v1/magic";		//TODO: will move to property file
+	private static final int MaxSeqNum = 100;																			//TODO: will move to property file
 
 	private List<Photo> listPhotos = new LinkedList<>();
 
