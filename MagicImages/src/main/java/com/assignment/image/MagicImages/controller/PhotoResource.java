@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,15 +16,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import com.assignment.image.MagicImages.Photo;
+import com.assignment.image.MagicImages.Model.Photo;
 
 @RestController
 @RequestMapping("/api/v1/photos")
 @CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
 public class PhotoResource {
 
-	private static final String photoResourceUrl = "http://5ad8d1c9dc1baa0014c60c51.mockapi.io/api/br/v1/magic";		//TODO: will move to property file
-	private static final int MaxSeqNum = 100;																			//TODO: will move to property file
+	@Value("${PhotoApp.ImagURL}")
+	private String photoResourceUrl;
+
+	@Value("${PhotoApp.MaxSeqNum}")
+	private int MaxSeqNum;
+
+	@Value("${PhotoApp.DefalutNumPerPage}")
+	private int NumPerPage;
 
 	private List<Photo> listPhotos = new LinkedList<>();
 
@@ -39,7 +46,8 @@ public class PhotoResource {
 		} catch (Exception e) {
 			Logger.getLogger(this.getClass().getName()).info("Id: " + id + ", " + e.fillInStackTrace().toString());
 			// TODO: get logic to get Content-Length , Etag to determin from
-			// ResponseHeader of HTTPClientException, then determine if contine to fetch next id or not.
+			// ResponseHeader of HTTPClientException, then determine if contine
+			// to fetch next id or not.
 		}
 		if (response != null) {
 			photo = response.getBody();
@@ -68,16 +76,17 @@ public class PhotoResource {
 			return ResponseEntity.noContent().build();
 
 	}
-	@RequestMapping(value="{id}", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+
+	@RequestMapping(value = "{id}", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
 	public ResponseEntity byId(@PathVariable("id") long id) {
 		logger.info("photo  byId() invoked: " + id);
 		return getPhoto(id);
 	}
 
-	// ?offset=25&limit=15  
-	@RequestMapping(value="/pagnation", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
-	public ResponseEntity byPageNum(@RequestParam(required= false, value = "offset") int offset, @RequestParam(value="limit") int limit) {
-		logger.info("photo  byPageNum() invoked: offset:" +offset + " limit:"+ limit);
+	@RequestMapping(value = "/pagnation", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+	public ResponseEntity byPageNum(@RequestParam(required = false, value = "offset") int offset,
+			@RequestParam(value = "limit") int limit) {
+		logger.info("photo  byPageNum() invoked: offset:" + offset + " limit:" + limit);
 		return getPhotoPage(limit, offset);
 	}
 
@@ -85,11 +94,11 @@ public class PhotoResource {
 		if (listPhotos == null || listPhotos.size() == 0) {
 			getAllPhotos();
 		}
-		if (offset <= 0)
-			offset = 1;
+		if (offset <= 0) offset = 1;
+		if (limit <= 0)	limit = NumPerPage;
 		if (offset >= listPhotos.size() / limit + 1)
 			offset = listPhotos.size() / limit + 1;
-		if(limit <=0 )limit = 20;
+		
 
 		List list = listPhotos.stream().skip(offset).limit(limit).collect(Collectors.toList());
 		logger.info("offset:" + offset + " limit:" + limit + " list.siz:" + list.size());
