@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-//import { HttpClient } from '@angular/common/http';
-//import { Observable } from 'rxjs/Observable';
 import { Photo } from "../model/Photo";
 import { AppService } from '../photo-app.service';
+
 
 @Component({
   selector: 'list-photos',
@@ -14,23 +13,24 @@ export class PhotosComponent implements OnInit {
 
   private photos: Photo[];
   title = 'Photos App';
-  
-   constructor(public appService: AppService) {}
+
+    constructor(public appService: AppService) {}
 
   ngOnInit() {  // when comppnent loading get all photos
     this.getAllPhotos();
   }
 
    getAllPhotos() {
-    
+          
       this.appService.findAll()
       .subscribe(photos => {
         console.log(photos,"res");
-        this.photos = photos;
+        this.photos = photos;        
       },
         err => {
           console.log(err);
        }
+       
     );
   
   }

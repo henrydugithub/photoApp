@@ -33,6 +33,7 @@ public class PhotoResource {
 	private int NumPerPage;
 
 	private List<Photo> listPhotos = new LinkedList<>();
+	private volatile boolean loaded = false;				//only load once when web browse refresh or open new browser
 
 	protected Logger logger = Logger.getLogger(PhotoResource.class.getName());
 
@@ -62,12 +63,9 @@ public class PhotoResource {
 	@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
 	public ResponseEntity getPhotos() {
 		logger.info("photow  invoked: ");
-
-		for (long i = 1; i <= MaxSeqNum; i++) {
-			ResponseEntity<Photo> result = getPhoto(i);
-			if (result != null && result.getBody() != null) {
-				listPhotos.add(result.getBody());
-			}
+		if (! loaded) {
+			loaded = true;
+			getAllPhotos();
 		}
 
 		if (listPhotos.size() > 0)
@@ -98,7 +96,7 @@ public class PhotoResource {
 		if (limit <= 0)	limit = NumPerPage;
 		if (offset >= listPhotos.size() / limit + 1)
 			offset = listPhotos.size() / limit + 1;
-		
+
 
 		List list = listPhotos.stream().skip(offset).limit(limit).collect(Collectors.toList());
 		logger.info("offset:" + offset + " limit:" + limit + " list.siz:" + list.size());
@@ -109,8 +107,9 @@ public class PhotoResource {
 			return ResponseEntity.noContent().build();
 	}
 
-	private List getAllPhotos() {
+	private void getAllPhotos() {
 		logger.info("getAllPhotos() invoked: ");
+
 		for (long i = 1; i <= MaxSeqNum; i++) {
 			ResponseEntity<Photo> result = getPhoto(i);
 			if (result != null && result.getBody() != null) {
@@ -118,7 +117,7 @@ public class PhotoResource {
 			}
 		}
 		logger.info("getAllPhotos() invoked: " + " listPhotos size:" + listPhotos.size());
-		return listPhotos;
+
 	}
 
 }

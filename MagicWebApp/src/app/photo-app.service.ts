@@ -7,7 +7,7 @@ import { Observable } from 'rxjs/Observable' ;
 import { Photo } from "./model/Photo";
 
 const httpOptions = {
-   headers: new HttpHeaders({ 'Content-Type':'application/json'})
+   headers: new HttpHeaders({ 'Content-Type':'application/json; charset=utf-8'})
 };
 
 
@@ -17,14 +17,13 @@ export class AppService {
   private apiUrl = "http://localhost:8080/api/v1/photos";
 
   //constructor(private http : HttpClient) {}
-  constructor(private http: HttpClient) {}
+  constructor(private http: Http) {}
 
    findAll(): Observable<Photo []>{
     return this.http.get(this.apiUrl)
-    .map((res: Response) => res.json())
-    .catch((error: any) => Observable.throw(error.json().error ||  'Server error'));
+     .map((res: Response) => res.json())
+     .catch((error: any) => Observable.throw(error.json().error ||  'Server error'));
 
   }
-
 
 }
