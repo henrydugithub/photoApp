@@ -2,6 +2,7 @@ package com.assignment.image.MagicImages.controller;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,8 +33,9 @@ public class PhotoResource {
 	@Value("${PhotoApp.DefalutNumPerPage}")
 	private int NumPerPage;
 
-	private List<Photo> listPhotos = new LinkedList<>();
-	private volatile boolean loaded = false;				//only load once when web browse refresh or open new browser
+	//private List<Photo> listPhotos = new LinkedList<>();
+	ConcurrentLinkedQueue<Photo> listPhotos = new ConcurrentLinkedQueue<>();
+	private volatile boolean loaded = false;		//only load once
 
 	protected Logger logger = Logger.getLogger(PhotoResource.class.getName());
 
@@ -67,7 +69,7 @@ public class PhotoResource {
 			loaded = true;
 			getAllPhotos();
 		}
-
+	
 		if (listPhotos.size() > 0)
 			return ResponseEntity.ok().body(listPhotos);
 		else
@@ -96,7 +98,7 @@ public class PhotoResource {
 		if (limit <= 0)	limit = NumPerPage;
 		if (offset >= listPhotos.size() / limit + 1)
 			offset = listPhotos.size() / limit + 1;
-
+		
 
 		List list = listPhotos.stream().skip(offset).limit(limit).collect(Collectors.toList());
 		logger.info("offset:" + offset + " limit:" + limit + " list.siz:" + list.size());
@@ -109,7 +111,7 @@ public class PhotoResource {
 
 	private void getAllPhotos() {
 		logger.info("getAllPhotos() invoked: ");
-
+		
 		for (long i = 1; i <= MaxSeqNum; i++) {
 			ResponseEntity<Photo> result = getPhoto(i);
 			if (result != null && result.getBody() != null) {
